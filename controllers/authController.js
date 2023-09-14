@@ -29,4 +29,38 @@ const signUpController = async (req, res) => {
     }
 }
 
-module.exports = { signUpController }
+const loginController = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        if (!email || !password) {
+            return res.send("email and password are required");
+        }
+
+        const oldUser = await User.findOne({ email }).select('+password');
+        if (!oldUser) {
+            return res.send("User is not registered");
+        }
+        const matched = await bcrypt.compare(password, oldUser.password);
+        if (!matched) {
+            return res.send("Incorrect Password");
+        }
+
+        const accessToken = generateAccessToken({ _id: oldUser._id });
+        res.send(accessToken);
+    } catch (error) {
+        res.send(error);
+    }
+}
+
+const generateAccessToken = (data) => {
+    try {
+        const token = jwt.sign(data, "AJAYJAYAJAYA", {
+            expiresIn: '1y'
+        });
+        return token;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+module.exports = { signUpController, loginController }
