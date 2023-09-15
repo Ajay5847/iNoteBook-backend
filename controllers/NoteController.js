@@ -32,4 +32,50 @@ const getAllNotes = async (req, res) => {
     }
 }
 
-module.exports = { addNote, getAllNotes }
+const updateNote = async (req, res) => {
+    try {
+        // check whether the user updating the note is valid user on not
+        console.log(req.params.id);
+        let note = await Note.findById(req.params.id);
+        if (!note) {
+            return res.status(401).send("Not Found");
+        }
+
+        console.log(note.user);
+        if (note.user.toString() !== req._id) {
+            return res.status(401).send("Invalid User");
+        }
+        const { title, description, tag } = req.body;
+        const newNote = {
+            title,
+            description,
+            tag
+        };
+
+        note = await Note.findByIdAndUpdate(req.params.id, { $set: newNote }, { new: true });
+        return res.status(200).send(note);
+    } catch (error) {
+        return res.status(500).send("Internal Server Error");
+    }
+}
+
+const deleteNote = async (req, res) => {
+    try {
+        let note = await Note.findById(req.params.id);
+        if (!note) {
+            return res.status(401).send("Not Found");
+        }
+
+        if (note.user.toString() !== req._id) {
+            return res.status(401).send("Invalid User");
+        }
+
+        note = await Note.findByIdAndDelete(req.params.id);
+
+        return res.status(200).send("User Deleted Successfully");
+    } catch (error) {
+        return res.status(500).send("Internal Server Error");
+    }
+}
+
+module.exports = { addNote, getAllNotes, updateNote, deleteNote }
